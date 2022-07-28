@@ -5,7 +5,13 @@
   "types": "./types/index.d.ts",
   "main": "./www/FirebaseAppCheck.js",
   "author": {
-    "name": "Aadit Olkar"
+    "name": "Aadit Olkar",
+    "email": "aaditolkar123@gmail.com",
+    "url": "https://github.com/aadito123"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aadito123/cordova-plugin-firebase-appcheck"
   },
   "license": "MIT",
   "cordova": {

@@ -42,7 +42,7 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
         context.error(msg);
     }
 
-    private void getToken(JSONArray args, CallbackContext callbackContext) {
+    private void getToken(CallbackContext callbackContext) {
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 try {
@@ -76,13 +76,18 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
         });
     }
 
+    // Todo: add enable debug mode
+    private void enableDebug(CallbackContext callbackContext) {
+
+    }
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 
         try {
             if (action.equals("getToken")) {
                 Log.d(TAG, "executing getToken");
-                this.getToken(args, callbackContext);
+                this.getToken(callbackContext);
             } else {
                 callbackContext.error("Invalid action: " + action);
                 return false;
