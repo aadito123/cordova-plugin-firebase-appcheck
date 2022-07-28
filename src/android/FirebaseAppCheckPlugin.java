@@ -88,6 +88,10 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
             if (action.equals("getToken")) {
                 Log.d(TAG, "executing getToken");
                 this.getToken(callbackContext);
+            } 
+            else if (action.equals("enableDebug")) {
+                Log.d(TAG, "executing enableDebug");
+                this.enableDebug(callbackContext);
             } else {
                 callbackContext.error("Invalid action: " + action);
                 return false;
