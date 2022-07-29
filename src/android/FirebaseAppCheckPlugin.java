@@ -15,7 +15,7 @@ import com.google.android.gms.tasks.Task;
 
 import com.google.firebase.appcheck.AppCheckToken;
 import com.google.firebase.appcheck.FirebaseAppCheck;
-// import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
 import com.google.firebase.FirebaseApp;
 
@@ -23,6 +23,7 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
     protected static final String TAG = "FirebaseAppCheck";
     protected static Context applicationContext = null;
     private FirebaseAppCheck mAppCheck;
+    private Boolean debugMode = false;
 
     @Override
     protected void pluginInitialize() {
@@ -33,7 +34,7 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
         mAppCheck = FirebaseAppCheck.getInstance();
         Log.d(TAG, "FirebaseAppCheck initialised");
         mAppCheck.installAppCheckProviderFactory(PlayIntegrityAppCheckProviderFactory.getInstance());
-        Log.d(TAG, "PlayIntegrityAppCheckProviderFactory installed3");
+        Log.d(TAG, "PlayIntegrityAppCheckProviderFactory installed");
     }
 
     protected static void handleExceptionWithContext(Exception e, CallbackContext context) {
@@ -43,6 +44,7 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
     }
 
     private void getToken(CallbackContext callbackContext) {
+
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
                 try {
@@ -51,18 +53,18 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
                                 @Override
                                 public void onComplete(Task<AppCheckToken> task) {
                                     try {
-                                        if (task.isSuccessful()) {
-                                            AppCheckToken result = task.getResult();
-                                            Log.d(TAG, "AppCheckToken: " + result.getToken());
-                                            JSONObject returnResults = new JSONObject();
-                                            returnResults.put("token", result.getToken());
-                                            returnResults.put("expireTimeMillis",
-                                                    Long.toString(result.getExpireTimeMillis()));
-                                            callbackContext.success(returnResults);
-                                        } else {
-                                            Log.d(TAG, "Token task unsuccesful");
+                                        if (!task.isSuccessful()) { // handle failure
+                                            Log.d(TAG, "Token task unsuccessful: " + task.getException().toString());
                                             callbackContext.error(task.getException().getMessage());
+                                            return;
                                         }
+                                        AppCheckToken result = task.getResult();
+                                        Log.d(TAG, "AppCheckToken: " + result.getToken());
+                                        JSONObject returnResults = new JSONObject();
+                                        returnResults.put("token", result.getToken());
+                                        returnResults.put("expireTimeMillis",
+                                                Long.toString(result.getExpireTimeMillis()));
+                                        callbackContext.success(returnResults);
                                     } catch (JSONException e) {
                                         Log.d(TAG, "Token task exception");
                                         handleExceptionWithContext(e, callbackContext);
@@ -76,9 +78,23 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
         });
     }
 
-    // Todo: add enable debug mode
     private void enableDebug(CallbackContext callbackContext) {
-
+        if (debugMode) {
+            callbackContext.success();
+            return;
+        }
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    mAppCheck.installAppCheckProviderFactory(DebugAppCheckProviderFactory.getInstance());
+                    debugMode = true;
+                    Log.d(TAG, "DebugAppCheckProviderFactory installed");
+                    callbackContext.success();
+                } catch (Exception e) {
+                    handleExceptionWithContext(e, callbackContext);
+                }
+            }
+        });
     }
 
     @Override
@@ -88,8 +104,7 @@ public class FirebaseAppCheckPlugin extends CordovaPlugin {
             if (action.equals("getToken")) {
                 Log.d(TAG, "executing getToken");
                 this.getToken(callbackContext);
-            } 
-            else if (action.equals("enableDebug")) {
+            } else if (action.equals("enableDebug")) {
                 Log.d(TAG, "executing enableDebug");
                 this.enableDebug(callbackContext);
             } else {
